@@ -65,17 +65,3 @@ The seed file `02_seed_data.sql` uses `generate_series` and `random()`, both nat
 | upgraded_to_paid | ~280 | ~14 | ~35% |
 
 **Monthly retention matrix** — cohorts hold ~60–70% at M1, decaying to ~5–8% by M6, with `0.0` in cells where the cohort hasn't aged enough yet (the visible "triangle").
-
-## Design notes worth mentioning in an interview
-
-1. **Why the funnel enforces ordering.** Counting users who fired each event independently overstates conversion — a user who upgraded before finishing onboarding shouldn't count as a clean funnel completion. The nested `MIN(event_time) ... WHERE event_time >= previous_step` pattern guarantees sequence.
-2. **Why M0 = 100%.** Signup itself counts as activity in the signup month, which is the standard convention — otherwise M0 varies with tracking noise and the matrix is hard to read.
-3. **Why the weekly curve filters young cohorts.** A cohort that signed up last week can't show week-4 retention; including it in the denominator would drag the curve down artificially.
-4. **Windowed conversion (Q5 in file 03)** makes cohorts comparable: "% paid within 30 days" is fair to both January and December signups, whereas lifetime conversion always favors older cohorts.
-
-## Extension ideas
-
-- Materialize the user-level funnel CTE as a view or dbt model and build the matrix off it.
-- Add an A/B test dimension to `users` and compare funnels between variants.
-- Swap monthly cohorts for `first_purchase` cohorts to analyze buyer retention.
-- Compute Quick Ratio: (new + resurrected) / churned per month from the lifecycle query.
